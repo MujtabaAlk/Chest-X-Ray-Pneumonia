@@ -1,4 +1,6 @@
+.gitignore
 /.idea/
 /venv/
 /notes/
 /images/
+test.py
