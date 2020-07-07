@@ -25,6 +25,10 @@ ratios = []
 differenceList = []
 heights = []
 widths = []
+largest_image_name = ""
+largest_image_dimension = 0
+smallest_image_name = ""
+smallest_image_dimension = 0
 
 for filename in os.listdir(directory):
     if filename.endswith(".jpeg"):
@@ -56,7 +60,28 @@ for filename in os.listdir(directory):
         croppedImage = image.crop((left, top, right, bottom))
         newName = outputDirectory + filename
         print(newName + ":\t", croppedImage.height, croppedImage.width, "\n")
-        # croppedImage.save(newName)
+        croppedImage.save(newName)
+
+        # store smallest and largest dimension
+        largeDim = croppedImage.height if (croppedImage.height > croppedImage.width) else croppedImage.width  # larger dimension
+        smallDim = croppedImage.height if (croppedImage.height < croppedImage.width) else croppedImage.width  # smaller dimension
+        # check if largest than current largest
+        if not largest_image_name == "":
+            if largest_image_dimension < largeDim:
+                largest_image_dimension = largeDim
+                largest_image_name = newName
+        else:
+            largest_image_dimension = largeDim
+            largest_image_name = newName
+
+        # check if smaller than current smallest
+        if not smallest_image_name == "":
+            if smallest_image_dimension > smallDim:
+                smallest_image_dimension = smallDim
+                smallest_image_name = newName
+        else:
+            smallest_image_dimension = smallDim
+            smallest_image_name = newName
 
         # add image information to output arrays/lists
         heights.append(croppedImage.height)
@@ -71,3 +96,6 @@ print("Heights:\nMax: ", max(heights), "Min: ", min(heights))
 print("Widths:\nMax: ", max(widths), "Min: ", min(widths))
 print("Ratios:\nMax: ", max(ratios), "Min: ", min(ratios))
 print("difference:\nMax: ", max(differenceList), "Min: ", min(differenceList))
+print("----------------------------------")
+print(largest_image_name + ":", largest_image_dimension)
+print(smallest_image_name + ":", smallest_image_dimension)
