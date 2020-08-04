@@ -3,7 +3,13 @@ import os
 import errno
 
 
-def crop_resize_images(input_dir_path: str):
+def crop_resize_images(input_dir_path: str) -> str:
+    """
+    This function takes in a path to a directory of images and rescales the images to size (512, 512) and stores them
+    in a new directory and returns the path to the output directory
+    :param input_dir_path: a string that represents the path to the directory containing the images
+    :return: a string that represents the path to the directory containing the rescaled images
+    """
     if "\\" in input_dir_path:
         input_dir_path = input_dir_path.replace("\\", "/")
 
@@ -57,14 +63,16 @@ def crop_resize_images(input_dir_path: str):
             new_image_name = output_dir_path + file_name
             # save output image
             output_image.save(new_image_name)
-
+        
         else:
             continue
 
+    return output_dir_path
 
 
 input_directory_name = "images/chest_xray/test/NORMAL"
 
 if __name__ == "__main__":
 
-    crop_resize_images(input_directory_name)
+    output_directory = crop_resize_images(input_directory_name)
+    print(output_directory)
