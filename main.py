@@ -2,100 +2,69 @@ from PIL import Image
 import os
 import errno
 
-directory = "images/chest_xray/test/NORMAL"
-outputDirectory = "images/chest_xray/test/NORMAL_Cropped"
 
-# add forward slash if it does not exist
-if not directory.endswith("/"):
-    directory = directory + "/"
+def crop_resize_images(input_dir_path: str):
+    if "\\" in input_dir_path:
+        input_dir_path = input_dir_path.replace("\\", "/")
 
-if not outputDirectory.endswith("/"):
-    outputDirectory = outputDirectory + "/"
+    # add forward slash if it does not exist
+    if not input_dir_path.endswith("/"):
+        input_dir_path = input_dir_path + "/"
 
-# create output directory if it does not exist
-if not os.path.exists(outputDirectory):
-    try:
-        os.makedirs(outputDirectory)
-    except OSError as exc:  # Guard against race condition
-        if exc.errno != errno.EEXIST:
-            raise
+    # output directory name
+    output_dir_path = input_dir_path[:-1] + "_Scaled/"
 
-# command line print arrays/lists
-ratios = []
-differenceList = []
-heights = []
-widths = []
-largest_image_name = ""
-largest_image_dimension = 0
-smallest_image_name = ""
-smallest_image_dimension = 0
+    # create output directory if it does not exist
+    if not os.path.exists(output_dir_path):
+        try:
+            os.makedirs(output_dir_path)
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
 
-for filename in os.listdir(directory):
-    if filename.endswith(".jpeg"):
-        image = Image.open(directory + filename)
-        print(filename + ":\t", image.height, image.width)
+    # loop through files in directory
+    for file_name in os.listdir(input_dir_path):
+        # if file is an image
+        if file_name.endswith(".jpeg"):
+            image = Image.open(input_dir_path + file_name)
 
-        # determine cropping points based on dimensions
-        width = image.width
-        height = image.height
-        if width > height:
-            difference = width - height
-            left = difference / 2
-            top = 0
-            right = width - (difference / 2)
-            bottom = height
-        elif height > width:
-            difference = height - width
-            left = 0
-            top = difference / 2
-            right = width
-            bottom = height - (difference / 2)
+            # determine cropping points based on dimensions
+            image_width = image.width
+            image_height = image.height
+            if image_width > image_height:
+                dim_difference = image_width - image_height
+                left_edge = dim_difference / 2
+                top_edge = 0
+                right_edge = image_width - (dim_difference / 2)
+                bottom_edge = image_height
+            elif image_height > image_width:
+                dim_difference = image_height - image_width
+                left_edge = 0
+                top_edge = dim_difference / 2
+                right_edge = image_width
+                bottom_edge = image_height - (dim_difference / 2)
+            else:
+                left_edge = 0
+                top_edge = 0
+                right_edge = image_width
+                bottom_edge = image_height
+
+            # crop image and save to output directory
+            cropped_image = image.crop((left_edge, top_edge, right_edge, bottom_edge))
+            # resize image
+            output_image = cropped_image.resize((512, 512), Image.LANCZOS)
+            # create new image name
+            new_image_name = output_dir_path + file_name
+            # save output image
+            output_image.save(new_image_name)
+
         else:
-            left = 0
-            top = 0
-            right = width
-            bottom = height
+            continue
 
-        # crop image and save to output directory
-        croppedImage = image.crop((left, top, right, bottom))
-        newName = outputDirectory + filename
-        print(newName + ":\t", croppedImage.height, croppedImage.width, "\n")
-        croppedImage.save(newName)
 
-        # store smallest and largest dimension
-        largeDim = croppedImage.height if (croppedImage.height > croppedImage.width) else croppedImage.width  # larger dimension
-        smallDim = croppedImage.height if (croppedImage.height < croppedImage.width) else croppedImage.width  # smaller dimension
-        # check if largest than current largest
-        if not largest_image_name == "":
-            if largest_image_dimension < largeDim:
-                largest_image_dimension = largeDim
-                largest_image_name = newName
-        else:
-            largest_image_dimension = largeDim
-            largest_image_name = newName
 
-        # check if smaller than current smallest
-        if not smallest_image_name == "":
-            if smallest_image_dimension > smallDim:
-                smallest_image_dimension = smallDim
-                smallest_image_name = newName
-        else:
-            smallest_image_dimension = smallDim
-            smallest_image_name = newName
+input_directory_name = "images/chest_xray/test/NORMAL"
 
-        # add image information to output arrays/lists
-        heights.append(croppedImage.height)
-        widths.append(croppedImage.width)
-        ratio = croppedImage.height / croppedImage.width
-        ratios.append(ratio)
-        differenceList.append(croppedImage.height - croppedImage.width)
-    else:
-        continue
+if __name__ == "__main__":
 
-print("Heights:\nMax: ", max(heights), "Min: ", min(heights))
-print("Widths:\nMax: ", max(widths), "Min: ", min(widths))
-print("Ratios:\nMax: ", max(ratios), "Min: ", min(ratios))
-print("difference:\nMax: ", max(differenceList), "Min: ", min(differenceList))
-print("----------------------------------")
-print(largest_image_name + ":", largest_image_dimension)
-print(smallest_image_name + ":", smallest_image_dimension)
+    crop_resize_images(input_directory_name)
