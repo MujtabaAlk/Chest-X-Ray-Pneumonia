@@ -1,6 +1,11 @@
-from PIL import Image
 import os
 import errno
+from pathlib import Path
+from PIL import Image
+import numpy as np
+import pickle
+import random
+from tensorflow import keras
 
 
 def crop_resize_images(input_dir_path: str) -> str:
@@ -70,9 +75,75 @@ def crop_resize_images(input_dir_path: str) -> str:
     return output_dir_path
 
 
-input_directory_name = "images/chest_xray/test/NORMAL"
+def load_images(dir_path: str) -> []:
+    """
+    This function will load the images in the specified directory into an array as numpy arrays
+    :param dir_path:
+    :return:
+    """
+
+    if "\\" in dir_path:
+        dir_path = dir_path.replace("\\", "/")
+
+    # add forward slash if it does not exist
+    if not dir_path.endswith("/"):
+        dir_path = dir_path + "/"
+
+    images = []
+
+    # loop through files in directory
+    for file_name in os.listdir(dir_path):
+        # if file is an image
+        if file_name.endswith(".jpeg"):
+            # load image
+            image = Image.open(dir_path + file_name)
+
+            # if image is not in grey scale mode
+            if not image.mode == "L":
+                image = image.convert("L")
+
+            # store in numpy array
+            image_array = np.array(image)
+            images.append(image_array)
+
+    return images
+
+
+normal_test_input_directory = "images/chest_xray/test/NORMAL"
+pneumonia_test_input_directory = "images/chest_xray/test/PNEUMONIA"
 
 if __name__ == "__main__":
 
-    output_directory = crop_resize_images(input_directory_name)
-    print(output_directory)
+    # # Rescale normal test images
+    # normal_test_output_directory = crop_resize_images(normal_test_input_directory)
+    # print(normal_test_output_directory)
+    # # Rescale pneumonia test images
+    # pneumonia_test_output_directory = crop_resize_images(pneumonia_test_input_directory)
+    # print(pneumonia_test_output_directory)
+
+    # load testing data into array
+    normal_test_data = load_images("./images/chest_xray/test/NORMAL_Scaled")
+    pneumonia_test_data = load_images("./images/chest_xray/test/PNEUMONIA_Scaled")
+
+    # store whole testing dataset into one object
+    testing_dataset = []
+    for image in normal_test_data:
+        testing_dataset.append([image, 0])
+    for image in pneumonia_test_data:
+        testing_dataset.append([image, 1])
+
+    # shuffle testing dataset
+    random.shuffle(testing_dataset)
+
+    # store normal testing data
+    pickle_out = open("./images/chest_xray/test/NORMAL.pickle", "wb")
+    pickle.dump(normal_test_data, pickle_out)
+    pickle_out.close()
+    # store pneumonia testing data
+    pickle_out = open("./images/chest_xray/test/PNEUMONIA.pickle", "wb")
+    pickle.dump(pneumonia_test_data, pickle_out)
+    pickle_out.close()
+    # store full testing dataset
+    pickle_out = open("./images/chest_xray/test/data.pickle", "wb")
+    pickle.dump(testing_dataset, pickle_out)
+    pickle_out.close()
