@@ -1,11 +1,14 @@
-import os
-import errno
 from pathlib import Path
 from PIL import Image
 import numpy as np
 import pickle
 import random
 from tensorflow import keras
+
+
+normal_test_input_directory = "images/chest_xray/test/NORMAL"
+pneumonia_test_input_directory = "images/chest_xray/test/PNEUMONIA"
+image_extensions = [".jpeg", ".jpg", ".png"]
 
 
 def crop_resize_images(input_dir_path: str) -> str:
@@ -15,64 +18,58 @@ def crop_resize_images(input_dir_path: str) -> str:
     :param input_dir_path: a string that represents the path to the directory containing the images
     :return: a string that represents the path to the directory containing the rescaled images
     """
+    # change \ to / for better compatibility
     if "\\" in input_dir_path:
         input_dir_path = input_dir_path.replace("\\", "/")
 
-    # add forward slash if it does not exist
-    if not input_dir_path.endswith("/"):
-        input_dir_path = input_dir_path + "/"
+    input_dir = Path(input_dir_path)
 
-    # output directory name
-    output_dir_path = input_dir_path[:-1] + "_Scaled/"
+    # create output directory path
+    output_dir = input_dir.parent / (input_dir.name + "_Scaled")
 
     # create output directory if it does not exist
-    if not os.path.exists(output_dir_path):
-        try:
-            os.makedirs(output_dir_path)
-        except OSError as exc:  # Guard against race condition
-            if exc.errno != errno.EEXIST:
-                raise
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    # loop through files in directory
-    for file_name in os.listdir(input_dir_path):
-        # if file is an image
-        if file_name.endswith(".jpeg"):
-            image = Image.open(input_dir_path + file_name)
+    # store paths for all image files in input directory with file extensions in image_extensions
+    image_paths = []
+    for extension in image_extensions:
+        image_paths.extend(input_dir.glob("*"+extension))
 
-            # determine cropping points based on dimensions
-            image_width = image.width
-            image_height = image.height
-            if image_width > image_height:
-                dim_difference = image_width - image_height
-                left_edge = dim_difference / 2
-                top_edge = 0
-                right_edge = image_width - (dim_difference / 2)
-                bottom_edge = image_height
-            elif image_height > image_width:
-                dim_difference = image_height - image_width
-                left_edge = 0
-                top_edge = dim_difference / 2
-                right_edge = image_width
-                bottom_edge = image_height - (dim_difference / 2)
-            else:
-                left_edge = 0
-                top_edge = 0
-                right_edge = image_width
-                bottom_edge = image_height
-
-            # crop image and save to output directory
-            cropped_image = image.crop((left_edge, top_edge, right_edge, bottom_edge))
-            # resize image
-            output_image = cropped_image.resize((512, 512), Image.LANCZOS)
-            # create new image name
-            new_image_name = output_dir_path + file_name
-            # save output image
-            output_image.save(new_image_name)
-        
+    # loop through images in directory
+    for image_path in image_paths:
+        # import image as Image object
+        image = Image.open(image_path)
+        # determine cropping points based on dimensions
+        image_width = image.width
+        image_height = image.height
+        if image_width > image_height:
+            dim_difference = image_width - image_height
+            left_edge = dim_difference / 2
+            top_edge = 0
+            right_edge = image_width - (dim_difference / 2)
+            bottom_edge = image_height
+        elif image_height > image_width:
+            dim_difference = image_height - image_width
+            left_edge = 0
+            top_edge = dim_difference / 2
+            right_edge = image_width
+            bottom_edge = image_height - (dim_difference / 2)
         else:
-            continue
+            left_edge = 0
+            top_edge = 0
+            right_edge = image_width
+            bottom_edge = image_height
 
-    return output_dir_path
+        # crop image and save to output directory
+        cropped_image = image.crop((left_edge, top_edge, right_edge, bottom_edge))
+        # resize image
+        output_image = cropped_image.resize((512, 512), Image.LANCZOS)
+        # create new image name
+        new_image_path = output_dir / image_path.name
+        # save output image
+        output_image.save(new_image_path)
+
+    return str(output_dir)
 
 
 def load_images(dir_path: str) -> []:
@@ -82,44 +79,42 @@ def load_images(dir_path: str) -> []:
     :return:
     """
 
+    # change \ to / for better compatibility
     if "\\" in dir_path:
         dir_path = dir_path.replace("\\", "/")
 
-    # add forward slash if it does not exist
-    if not dir_path.endswith("/"):
-        dir_path = dir_path + "/"
+    input_dir = Path(dir_path)
+
+    # store paths for all image files in input directory with file extensions in image_extensions
+    image_paths = []
+    for extension in image_extensions:
+        image_paths.extend(input_dir.glob("*" + extension))
 
     images = []
+    # loop through images in directory
+    for image_path in image_paths:
+        # load image
+        image = Image.open(image_path)
 
-    # loop through files in directory
-    for file_name in os.listdir(dir_path):
-        # if file is an image
-        if file_name.endswith(".jpeg"):
-            # load image
-            image = Image.open(dir_path + file_name)
+        # if image is not in grey scale mode
+        if not image.mode == "L":
+            image = image.convert("L")
 
-            # if image is not in grey scale mode
-            if not image.mode == "L":
-                image = image.convert("L")
-
-            # store in numpy array
-            image_array = np.array(image)
-            images.append(image_array)
+        # store in numpy array
+        image_array = np.array(image)
+        images.append(image_array)
 
     return images
 
 
-normal_test_input_directory = "images/chest_xray/test/NORMAL"
-pneumonia_test_input_directory = "images/chest_xray/test/PNEUMONIA"
-
 if __name__ == "__main__":
 
-    # # Rescale normal test images
-    # normal_test_output_directory = crop_resize_images(normal_test_input_directory)
-    # print(normal_test_output_directory)
-    # # Rescale pneumonia test images
-    # pneumonia_test_output_directory = crop_resize_images(pneumonia_test_input_directory)
-    # print(pneumonia_test_output_directory)
+    # Rescale normal test images
+    normal_test_output_directory = crop_resize_images(normal_test_input_directory)
+    print(normal_test_output_directory)
+    # Rescale pneumonia test images
+    pneumonia_test_output_directory = crop_resize_images(pneumonia_test_input_directory)
+    print(pneumonia_test_output_directory)
 
     # load testing data into array
     normal_test_data = load_images("./images/chest_xray/test/NORMAL_Scaled")
