@@ -8,6 +8,7 @@ from tensorflow import keras
 
 normal_test_input_directory = "images/chest_xray/test/NORMAL"
 pneumonia_test_input_directory = "images/chest_xray/test/PNEUMONIA"
+output_dataset_file_name = "./images/chest_xray/test/data.pickle"
 image_extensions = [".jpeg", ".jpg", ".png"]
 
 
@@ -117,8 +118,8 @@ if __name__ == "__main__":
     print(pneumonia_test_output_directory)
 
     # load testing data into array
-    normal_test_data = load_images("./images/chest_xray/test/NORMAL_Scaled")
-    pneumonia_test_data = load_images("./images/chest_xray/test/PNEUMONIA_Scaled")
+    normal_test_data = load_images(normal_test_output_directory)
+    pneumonia_test_data = load_images(pneumonia_test_output_directory)
 
     # store whole testing dataset into one object
     testing_dataset = []
@@ -131,14 +132,14 @@ if __name__ == "__main__":
     random.shuffle(testing_dataset)
 
     # store normal testing data
-    pickle_out = open("./images/chest_xray/test/NORMAL.pickle", "wb")
+    pickle_out = open(normal_test_input_directory + ".pickle", "wb")
     pickle.dump(normal_test_data, pickle_out)
     pickle_out.close()
     # store pneumonia testing data
-    pickle_out = open("./images/chest_xray/test/PNEUMONIA.pickle", "wb")
+    pickle_out = open(pneumonia_test_input_directory + ".pickle", "wb")
     pickle.dump(pneumonia_test_data, pickle_out)
     pickle_out.close()
     # store full testing dataset
-    pickle_out = open("./images/chest_xray/test/data.pickle", "wb")
+    pickle_out = open(output_dataset_file_name, "wb")
     pickle.dump(testing_dataset, pickle_out)
     pickle_out.close()
