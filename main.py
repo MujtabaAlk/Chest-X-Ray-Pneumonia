@@ -12,12 +12,12 @@ output_dataset_file_name = "./images/chest_xray/test/data.pickle"
 image_extensions = [".jpeg", ".jpg", ".png"]
 
 
-def crop_resize_images(input_dir_path: str) -> str:
+def rescale_load_images(input_dir_path: str) -> []:
     """
-    This function takes in a path to a directory of images and rescales the images to size (512, 512) and stores them
-    in a new directory and returns the path to the output directory
+    This function takes in a path to a directory of images, it will then rescales the images to size (512, 512)
+    , store them in a new directory and load the images into an array after being converted to numpy arrays
     :param input_dir_path: a string that represents the path to the directory containing the images
-    :return: a string that represents the path to the directory containing the rescaled images
+    :return: An array of numpy arrays representing the rescaled images
     """
     # change \ to / for better compatibility
     if "\\" in input_dir_path:
@@ -36,13 +36,19 @@ def crop_resize_images(input_dir_path: str) -> str:
     for extension in image_extensions:
         image_paths.extend(input_dir.glob("*"+extension))
 
+    # array for storing image numpy arrays
+    image_arrays = []
+
     # loop through images in directory
     for image_path in image_paths:
         # import image as Image object
-        image = Image.open(image_path)
+        input_image = Image.open(image_path)
+        # if image is not in grey scale mode convert to gray scale
+        if not input_image.mode == "L":
+            input_image = input_image.convert("L")
         # determine cropping points based on dimensions
-        image_width = image.width
-        image_height = image.height
+        image_width = input_image.width
+        image_height = input_image.height
         if image_width > image_height:
             dim_difference = image_width - image_height
             left_edge = dim_difference / 2
@@ -62,64 +68,25 @@ def crop_resize_images(input_dir_path: str) -> str:
             bottom_edge = image_height
 
         # crop image and save to output directory
-        cropped_image = image.crop((left_edge, top_edge, right_edge, bottom_edge))
+        cropped_image = input_image.crop((left_edge, top_edge, right_edge, bottom_edge))
         # resize image
         output_image = cropped_image.resize((512, 512), Image.LANCZOS)
         # create new image name
         new_image_path = output_dir / image_path.name
         # save output image
         output_image.save(new_image_path)
+        # convert image to numpy array and append to image_arrays
+        image_arrays.append(np.array(output_image))
 
-    return str(output_dir)
-
-
-def load_images(dir_path: str) -> []:
-    """
-    This function will load the images in the specified directory into an array as numpy arrays
-    :param dir_path:
-    :return:
-    """
-
-    # change \ to / for better compatibility
-    if "\\" in dir_path:
-        dir_path = dir_path.replace("\\", "/")
-
-    input_dir = Path(dir_path)
-
-    # store paths for all image files in input directory with file extensions in image_extensions
-    image_paths = []
-    for extension in image_extensions:
-        image_paths.extend(input_dir.glob("*" + extension))
-
-    images = []
-    # loop through images in directory
-    for image_path in image_paths:
-        # load image
-        image = Image.open(image_path)
-
-        # if image is not in grey scale mode
-        if not image.mode == "L":
-            image = image.convert("L")
-
-        # store in numpy array
-        image_array = np.array(image)
-        images.append(image_array)
-
-    return images
+    print(str(output_dir))  # print where the rescaled images are stored for testing purposes
+    return image_arrays
 
 
 if __name__ == "__main__":
 
-    # Rescale normal test images
-    normal_test_output_directory = crop_resize_images(normal_test_input_directory)
-    print(normal_test_output_directory)
-    # Rescale pneumonia test images
-    pneumonia_test_output_directory = crop_resize_images(pneumonia_test_input_directory)
-    print(pneumonia_test_output_directory)
-
-    # load testing data into array
-    normal_test_data = load_images(normal_test_output_directory)
-    pneumonia_test_data = load_images(pneumonia_test_output_directory)
+    # rescale and load testing data (images) into arrays
+    normal_test_data = rescale_load_images(normal_test_input_directory)
+    pneumonia_test_data = rescale_load_images(pneumonia_test_input_directory)
 
     # store whole testing dataset into one object
     testing_dataset = []
