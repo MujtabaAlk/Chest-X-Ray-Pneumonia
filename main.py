@@ -98,14 +98,6 @@ if __name__ == "__main__":
     # shuffle testing dataset
     random.shuffle(testing_dataset)
 
-    # store normal testing data
-    pickle_out = open(normal_test_input_directory + ".pickle", "wb")
-    pickle.dump(normal_test_data, pickle_out)
-    pickle_out.close()
-    # store pneumonia testing data
-    pickle_out = open(pneumonia_test_input_directory + ".pickle", "wb")
-    pickle.dump(pneumonia_test_data, pickle_out)
-    pickle_out.close()
     # store full testing dataset
     pickle_out = open(output_dataset_file_name, "wb")
     pickle.dump(testing_dataset, pickle_out)
