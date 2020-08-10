@@ -26,7 +26,7 @@ def rescale_load_images(input_dir_path: str) -> []:
     input_dir = Path(input_dir_path)
 
     # create output directory path
-    output_dir = input_dir.parent / (input_dir.name + "_Scaled")
+    output_dir = input_dir.parent.parent / (input_dir.parent.name + "_Rescaled") / input_dir.name
 
     # create output directory if it does not exist
     output_dir.mkdir(parents=True, exist_ok=True)
