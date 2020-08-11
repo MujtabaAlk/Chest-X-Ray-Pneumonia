@@ -3,7 +3,6 @@ from PIL import Image
 import numpy as np
 import pickle
 import random
-from tensorflow import keras
 
 
 normal_test_input_directory = "images/chest_xray/test/NORMAL"
