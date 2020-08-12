@@ -19,12 +19,14 @@ if __name__ == '__main__':
         X.append(feature)
         y.append(label)
 
-    # reshape X to appropriate shape
+    # convert X into np array and reshape to appropriate shape
     X = np.array(X).reshape((-1, image_size, image_size, 1))
-
+    # convert y into np array
     y = np.array(y)
     # normalize X values
     X = X/255.0
+    # delete unneeded objects
+    del dataset
 
     # debugging line: print data arrays
     print(X)
