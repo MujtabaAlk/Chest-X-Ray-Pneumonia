@@ -1,12 +1,15 @@
 from pathlib import Path
 import pickle
+import time
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dense, Activation, Dropout
+from tensorflow.keras.callbacks import TensorBoard
 
 input_dataset_path = "./images/chest_xray/train/data.pickle"
 image_size = 512
+model_name = f"chest_xray_pneumonia__2CNN64#3x3-1DNS64-binCross-adam-{int(time.time())}"
 
 if __name__ == '__main__':
     # load dataset
@@ -54,7 +57,9 @@ if __name__ == '__main__':
     model.compile(loss="binary_crossentropy",
                   optimizer="adam",
                   metrics=["accuracy"])
+    # create tensorboard object
+    tensorboard = TensorBoard(log_dir=f"logs/{model_name}")
     # train model using training data
-    model.fit(X, y, batch_size=32,  epochs=10, validation_split=0.2)
+    model.fit(X, y, batch_size=32,  epochs=10, validation_split=0.3, callbacks=[tensorboard])
     # save model
     model.save("./trained_model")
