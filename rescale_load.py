@@ -5,9 +5,12 @@ import pickle
 import random
 
 
-normal_test_input_directory = "images/chest_xray/test/NORMAL"
-pneumonia_test_input_directory = "images/chest_xray/test/PNEUMONIA"
-output_dataset_file_name = "./images/chest_xray/test/data.pickle"
+normal_test_input_directory = "./images/chest_xray/test/NORMAL"
+normal_train_input_directory = "./images/chest_xray/train/NORMAL"
+pneumonia_test_input_directory = "./images/chest_xray/test/PNEUMONIA"
+pneumonia_train_input_directory = "./images/chest_xray/train/PNEUMONIA"
+output_test_dataset_file_name = "./images/chest_xray/test/data.pickle"
+output_train_dataset_file_name = "./images/chest_xray/train/data.pickle"
 image_extensions = [".jpeg", ".jpg", ".png"]
 
 
@@ -83,6 +86,7 @@ def rescale_load_images(input_dir_path: str) -> []:
 
 if __name__ == "__main__":
 
+    # process testing data
     # rescale and load testing data (images) into arrays
     normal_test_data = rescale_load_images(normal_test_input_directory)
     pneumonia_test_data = rescale_load_images(pneumonia_test_input_directory)
@@ -98,6 +102,26 @@ if __name__ == "__main__":
     random.shuffle(testing_dataset)
 
     # store full testing dataset
-    pickle_out = open(output_dataset_file_name, "wb")
+    pickle_out = open(output_test_dataset_file_name, "wb")
     pickle.dump(testing_dataset, pickle_out)
+    pickle_out.close()
+
+    # process training data
+    # rescale and load training data (images) into arrays
+    normal_train_data = rescale_load_images(normal_train_input_directory)
+    pneumonia_train_data = rescale_load_images(pneumonia_train_input_directory)
+
+    # store whole training dataset into one object
+    training_dataset = []
+    for image in normal_train_data:
+        training_dataset.append([image, 0])
+    for image in pneumonia_train_data:
+        training_dataset.append([image, 1])
+
+    # shuffle training dataset
+    random.shuffle(training_dataset)
+
+    # store full training dataset
+    pickle_out = open(output_train_dataset_file_name, "wb")
+    pickle.dump(training_dataset, pickle_out)
     pickle_out.close()
